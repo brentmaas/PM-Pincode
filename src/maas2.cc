@@ -1,8 +1,10 @@
 /**
  * Auteur: Brent Maas (s1826247)
  * Bestand: maas2.cc
- * Functie: 
- * Getest op: Windows 10 + MSys2 (MinGW64) met g++ 7.3.0
+ * Functie: (De)Coderen van bestanden met behulp van pincodes, het controleren
+ * op Lychrelgetallen in de ongecodeerde versie, en het eventueel herstellen
+ * van pincodes
+ * Getest op: Windows 10 + MSys2 (MinGW64) met g++ 8.2.0
  * Getest met: g++ -o Assignment1 maas1.cc -std=c++17 -Wall -Wextra
  * Laatst bewerkt: 04/10/2018
  */
@@ -20,7 +22,10 @@ void infoBlokje(){
 	"Studentnummer: s1826247\n"
 	"Opgave: Pincode\n"
 	"\n"
-	"<functie>\n"
+	"Dit programma kan gegeven bestanden coderen met behulp van een pincode\n"
+	"en deze bestanden op vergelijkbare wijze decoderen. Als de pincode\n"
+	"onbekend of verloren is, kan het programma een poging doen deze te\n"
+	"herstellen.\n"
 	"Laatst bewerkt: 20/09/2018\n"
 	"////////////////////////////////////////////////\n" << std::endl;
 }
@@ -63,13 +68,27 @@ void lychrel(int getal){
 	std::cout << getal << " is een potentieel Lychrel-getal na " << i << " iteraties (INT_MAX bereikt)" << std::endl;
 }
 
+//Controleer of een char een getal is
+bool isGetal(char c){
+	return c >= '0' && c <= '9';
+}
+
 //Geeft de gecodeerde versie van karakter, als karakter het index-de karakter in het
 //bestand is met de gegeven pincode
 char codeerEnkel(char karakter, int pincode, int index){
 	return (karakter + intAt(pincode, 3 - (index % 4))) % 256;
 }
 
-int coderen(const char* invoerBestand, const char* uitvoerBestand, const int pincode){
+//De hoofdfunctie voor het coderen
+int coderen(const char* invoerBestand, const char* uitvoerBestand){
+	int pincode;
+	std::cout << "Pincode: ";
+	std::cin >> pincode;
+	if(pincode < 0 || pincode > 9999){
+		std::cout << "Ongeldige pincode: " << pincode << std::endl;
+		return 1;
+	}
+	
 	std::fstream invoer(invoerBestand, std::ios_base::in);	
 	if(!invoer.is_open()){
 		std::cout << "Kon invoerbestand niet openen: " << invoerBestand << std::endl;
@@ -81,10 +100,9 @@ int coderen(const char* invoerBestand, const char* uitvoerBestand, const int pin
 		return 1;
 	}
 	
-	char current;
 	int code = pincode, regels = 0, karakters = 0, index = 0, numBuf = 0;
 	while(true){
-		current = invoer.get();
+		char current = invoer.get();
 		if(invoer.eof()) break;
 		if(current == '\n'){
 			//std::cout << current;
@@ -97,7 +115,7 @@ int coderen(const char* invoerBestand, const char* uitvoerBestand, const int pin
 			index++;
 		}
 		//0 is op waarde 48 in de asciitabel
-		if(current >= '0' && current <= '9') numBuf = numBuf * 10 + (current - 48);
+		if(isGetal(current)) numBuf = numBuf * 10 + (current - 48);
 		else if(numBuf != 0){
 			lychrel(numBuf);
 			if(numBuf > 0 && numBuf < 10000){
@@ -127,8 +145,108 @@ char decodeerEnkel(char karakter, int pincode, int index){
 	return (karakter - intAt(pincode, 3 - (index % 4)) + 256) % 256;
 }
 
-int decoderen(const char* invoerBestand, const char* uitvoerBestand, const int pincode){
+//De hoofdfunctie voor het decoderen
+int decoderen(const char* invoerBestand, const char* uitvoerBestand){
+	int pincode;
+	std::cout << "Pincode (mocht u deze vergeten zijn, voer \'-1\' in): ";
+	std::cin >> pincode;
+	if(pincode < -1 || pincode > 9999){
+		std::cout << "Ongeldige pincode: " << pincode << std::endl;
+		return 1;
+	}
 	
+	if(pincode >= 0){ //Normaal decoderen
+		std::fstream invoer(invoerBestand, std::ios_base::in);
+		if(!invoer.is_open()){
+			std::cout << "Kon invoerbestand niet openen: " << invoerBestand << std::endl;
+			return 1;
+		}
+		std::fstream uitvoer(uitvoerBestand, std::ios_base::out);
+		if(!uitvoer.is_open()){
+			std::cout << "Kon uitvoerbestand niet openen: " << uitvoerBestand << std::endl;
+			return 1;
+		}
+		
+		int code = pincode, regels = 0, karakters = 0, index = 0, numBuf = 0;
+		while(true){
+			char current = invoer.get();
+			if(invoer.eof()) break;
+			char currentDec = decodeerEnkel(current, code, index);
+			if(current == '\n'){
+				uitvoer << current;
+				index = 0;
+				regels++;
+			}else{
+				uitvoer << currentDec;
+				index++;
+			}
+			//0 is op waarde 48 in de asciitabel
+			if(isGetal(currentDec)) numBuf = 10 * numBuf + (currentDec - 48);
+			else if(numBuf != 0){
+				if(numBuf > 0 && numBuf < 10000){
+					code = numBuf;
+					index = 0;
+				}
+				numBuf = 0;
+			}
+			
+			karakters++;
+		}
+		
+		invoer.close();
+		uitvoer.close();
+	}else{ //Pincode herstellen
+		int besteCode = -1, besteScore = -1, regels = 0, karakters = 0;
+		for(int pincode = 0;pincode < 10000;pincode++){
+			std::fstream invoer(invoerBestand, std::ios_base::in);
+			if(!invoer.is_open()){
+				std::cout << "Kon invoerbestand niet openen: " << invoerBestand << std::endl;
+				return 1;
+			}
+			
+			if(pincode % 1000 == 0) std::cout << pincode / 100 << "%" << std::endl;
+			int code = pincode, index = 0, numBuf = 0, score = 0;
+			//0: "", 1: "t", 2: "th"
+			int the = 0;
+			while(true){
+				char current = invoer.get();
+				if(invoer.eof()) break;
+				char currentDec = decodeerEnkel(current, code, index);
+				if(current == '\n'){
+					index = 0;
+					if(pincode == 0) regels++; //Tellen is maar eenmaal nodig
+				}else{
+					if((the == 0 && (currentDec == 't' || currentDec == 'T')) || (the == 1 && (currentDec == 'h' || currentDec == 'H'))) the++;
+					else if(the == 2 && (currentDec == 'e' || currentDec == 'E')){
+						score++;
+						the = 0;
+					}else{
+						the = 0;
+					}
+					index++;
+				}
+				//0 is op waarde 48 op de asciitabel
+				if(isGetal(currentDec)) numBuf = 10 * numBuf + (currentDec - 48);
+				else if(numBuf != 0){
+					if(numBuf > 0 && numBuf < 10000){
+						code = numBuf;
+						index = 0;
+					}
+					numBuf = 0;
+				}
+				
+				if(pincode == 0) karakters++; //Tellen is maar eenmaal nodig
+			}
+			if(score > besteScore){
+				besteScore = score;
+				besteCode = pincode;
+			}
+			
+			invoer.close();
+		}
+		
+		std::cout << "De pincode voor het bestand was " << besteCode << std::endl;
+	}
 	
 	return 0;
 }
@@ -145,18 +263,11 @@ int main(){
 	}
 	
 	std::string invoerFile, uitvoerFile;
-	int pincode;
-	std::cout << "Invoerbestand: ";
+	std::cout << "Invoerbestand:" << std::endl;
 	std::cin >> invoerFile;
-	std::cout << "Uitvoerbestand: ";
+	std::cout << "Uitvoerbestand:" << std::endl;
 	std::cin >> uitvoerFile;
-	std::cout << "Pincode: ";
-	std::cin >> pincode;
-	if(pincode < -1 && pincode > 9999){
-		std::cout << "Ongeldige pincode: " << pincode << std::endl;
-		return 1;
-	}
 	
-	if(keuze == 'c' || keuze == 'C') return coderen(invoerFile.c_str(), uitvoerFile.c_str(), pincode);
-	return decoderen(invoerFile.c_str(), uitvoerFile.c_str(), pincode);
+	if(keuze == 'c' || keuze == 'C') return coderen(invoerFile.c_str(), uitvoerFile.c_str());
+	return decoderen(invoerFile.c_str(), uitvoerFile.c_str());
 }
