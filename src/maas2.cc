@@ -54,9 +54,9 @@ int reverse(int getal){
 }
 
 //Berekent het aantal iteraties voordat het gegeven getal een palindroom is
-//(een Lychrelgetal) en vertelt dit aan de standaarduitvoer. In het geval dat
+//(een niet-Lychrel-getal) en vertelt dit aan de standaarduitvoer. In het geval dat
 //dit te lang duurt (boven INT_MAX uitkomt), wordt dit als potentieel
-//Lychrelgetal gegeven met de iteratie waar het fout gaat
+//Lychrel-getal gegeven met de iteratie waar het fout gaat
 void lychrel(int getal){
 	int buffer = getal, rev, i;
 	//Zolang het omgedraaide getal groter is dan nul (kleiner dan nul betekent
@@ -65,7 +65,7 @@ void lychrel(int getal){
 	for(i = 0;rev >= 0 && buffer >= 0 && getal <= INT_MAX - rev;i++){
 		rev = reverse(buffer);
 		if(buffer == rev){ //Het getal is nu een palidroom, melden en stoppen
-			std::cout << getal << " is een Lychrel-getal na " << i <<
+			std::cout << getal << " is niet een Lychrel-getal na " << i <<
 					" iteraties" << std::endl;
 			return;
 		}
