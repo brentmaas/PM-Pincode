@@ -5,7 +5,9 @@
  * op Lychrelgetallen in de ongecodeerde versie, en het eventueel herstellen
  * van pincodes
  * Getest op: Windows 10 + MSys2 (MinGW64) met g++ 8.2.0
- * Getest met: g++ -o Assignment1 maas1.cc -std=c++17 -Wall -Wextra
+ *            Ubuntu 16.04 LTS met g++ 5.4.0
+ * Getest met: g++ -o Assignment2 maas2.cc -std=c++17 -Wall -Wextra
+ *             g++ -o Assignment2 maas2.cc -std=c++11 -Wall -Wextra
  * Laatst bewerkt: 10/10/2018
  */
 
@@ -58,7 +60,7 @@ int reverse(int getal){
 //dit te lang duurt (boven INT_MAX uitkomt), wordt dit als potentieel
 //Lychrel-getal gegeven met de iteratie waar het fout gaat
 void lychrel(int getal){
-	int buffer = getal, rev, i;
+	int buffer = getal, rev = 0, i = 0;
 	//Zolang het omgedraaide getal groter is dan nul (kleiner dan nul betekent
 	//mogelijk een integer overflow), de buffer groter is dan nul (idem), en
 	//de twee samen niet groter zijn dan INT_MAX
