@@ -8,7 +8,7 @@
  *            Ubuntu 16.04 LTS met g++ 5.4.0
  * Getest met: g++ -o Assignment2 maas2.cc -std=c++17 -Wall -Wextra
  *             g++ -o Assignment2 maas2.cc -std=c++11 -Wall -Wextra
- * Laatst bewerkt: 10/10/2018
+ * Laatst bewerkt: 11/10/2018
  */
 
 #include <iostream>
@@ -28,8 +28,9 @@ void infoBlokje(){
 	"Dit programma kan gegeven bestanden coderen met behulp van een pincode\n"
 	"en deze bestanden op vergelijkbare wijze decoderen. Als de pincode\n"
 	"onbekend of verloren is, kan het programma een poging doen deze te\n"
-	"herstellen.\n"
-	"Laatst bewerkt: 10/10/2018\n"
+	"herstellen. Ook worden eventuele getallen in een invoerbestand\n"
+	"gecontroleerd of deze Lychrel-getallen zijn.\n"
+	"Laatst bewerkt: 11/10/2018\n"
 	"////////////////////////////////////////////////\n" << std::endl;
 }
 
